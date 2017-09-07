@@ -1,0 +1,194 @@
+<?php
+    $_collectionSize = count($this->getProductCollection()->getItems());
+?>
+<?php if($_collectionSize): ?>
+<?php
+    $theme = $this->helper('ultimo');
+    $helpImg = $this->helper('infortis/image');
+    $sliderClasses = '';
+    $gridClasses = '';
+
+    $sliderId = "itemslider-soldtogether-customer";
+
+    //Slider parameters
+    // (sold together uses settings for upsell block)
+    //--------------------------------------------------------------
+
+    //Responsive mode on/off
+    $isResponsive = true;
+
+    //Assign number of items in a row to specific viewport width
+    $breakpoints = $theme->getCfg('product_page/upsell_breakpoints');
+    if (empty($breakpoints)) //Param not set
+    {
+        $breakpoints = '[0, 1], [320, 2], [480, 3], [992, 4], [1200, 5]'; //Set default breakpoints
+    }
+
+    //Pagination on/off
+    $pagination = false;
+
+    //Default image size
+    $imgWidth = 196;
+    $imgHeight = 196;
+
+        //Image aspect ratio
+        if ($theme->getCfg('category/aspect_ratio'))
+        {
+            $imgHeight = 0; //Height will be computed automatically (based on width) to keep the aspect ratio
+        }
+
+    //Slider timeout. Set to enable automatic scrolling.
+    $timeout = intval($theme->getCfg('product_page/upsell_timeout'));
+
+    //Number of items that should move on scrolling
+    $move = 0;
+
+    //If set, slider will loop
+    $loop = $theme->getCfg('product_slider/loop');
+
+    //Speed (arrows / touch swipe)
+    $speed = intval($theme->getCfg('product_slider/speed'));
+
+    //Speed (automatic scrolling / pagination)
+    $autoSpeed = intval($theme->getCfg('product_slider/auto_speed'));
+
+    //Pause slider on mouse hover
+    $pause = $theme->getCfg('product_slider/pause');
+
+    //Lazy loading
+    $lazy = $theme->getCfg('product_slider/lazy');
+    //Slider classes
+    //--------------------------------------------------------------
+    if($isResponsive)
+    {
+        $sliderClasses .= ' itemslider-responsive';
+    }
+
+    if ($_collectionSize == 1)
+    {
+        $sliderClasses .= ' single-item';
+    }
+
+    //Product grid classes
+    //--------------------------------------------------------------
+
+    //Align elements to the center
+    if ($theme->getCfg('category_grid/centered'))
+    {
+        $gridClasses .= ' centered';
+    }
+?>
+<div class="box-collateral block-upsell block-soldtogether-customer-ultimo">
+    <strong class="section-title padding-right"><?php echo Mage::helper('soldtogether')->__('Customers Who Bought This Item Also Bought'); ?><?php if ($this->getConfigAddToCartCheckbox()) : ?>
+            <a class="select-all" style="float: right" href="javascript:void(0)"><?php echo Mage::helper('soldtogether')->__('select all') ?></a>
+        <?php endif ?></strong>
+    <div class="itemslider-wrapper itemslider-upsell-wrapper slider-arrows1 slider-arrows1-pos-top-right slider-pagination1">
+        <div id="<?php echo $sliderId; ?>" class="itemslider <?php if($sliderClasses) echo $sliderClasses; ?> products-grid<?php if($gridClasses) echo $gridClasses; ?>">
+        <?php //$this->resetItemsIterator() ?>
+        <?php foreach($this->getProductCollection() as $_product): //$_link replaced with $_product ?>
+            <div class="item">
+                <a href="<?php echo $_product->getProductUrl() ?>" title="<?php echo $this->escapeHtml($_product->getName()) ?>" class="product-image">
+
+                    <?php if ($lazy): ?>
+                        <img class="lazyOwl" data-src="<?php echo $helpImg->getImg($_product, $imgWidth, $imgHeight, 'small_image'); ?>" alt="<?php echo $this->escapeHtml($_product->getName()) ?>" />
+                    <?php else: ?>
+                        <img src="<?php echo $helpImg->getImg($_product, $imgWidth, $imgHeight, 'small_image'); ?>" alt="<?php echo $this->escapeHtml($_product->getName()) ?>" />
+                    <?php endif; ?>
+
+                </a>
+                <strong class="product-name">
+                <?php if ($this->showCheckbox($_product)) : ?>
+                    <input title="<?php echo $this->__('Add this product to the cart too') ?>" type="checkbox" class="checkbox addtocart-checkbox relatedcustomer-checkbox" id="relatedcustomer-checkbox<?php echo $_product->getId() ?>" name="bought_related_products[]" value="<?php echo $_product->getId() ?>"/>
+                <?php endif ?>
+                    <a href="<?php echo $_product->getProductUrl() ?>" title="<?php echo $this->escapeHtml($_product->getName()) ?>"><?php echo $this->escapeHtml($_product->getName()) ?></a>
+                </strong>
+                <?php echo $this->getReviewsSummaryHtml($_product, 'short') ?>
+                <?php echo $this->getPriceHtml($_product, true, '-soldtogether-customer') ?>
+                <?php if (!$this->getConfigAddToCartCheckbox()): ?>
+                <div class="actions">
+                        <?php if($_product->isSaleable()): ?>
+                            <button type="button" title="<?php echo $this->__('Add to Cart') ?>" class="button" style="float: none;" onclick="setLocation('<?php echo $this->getAddToCartUrl($_product) ?>')"><span><span><?php echo $this->__('Add to Cart') ?></span></span></button>
+                        <?php else: ?>
+                            <p class="availability out-of-stock"><span><?php echo $this->__('Out of stock') ?></span></p>
+                        <?php endif; ?>
+                </div>
+                <?php endif; ?>
+            </div>
+        <?php endforeach; ?>
+        </div> <!-- end: itemslider -->
+    </div> <!-- end: itemslider-wrapper -->
+    <script type="text/javascript">
+    //<![CDATA[
+        jQuery(function($) {
+
+            var owl = $('#<?php echo $sliderId; ?>');
+            owl.owlCarousel({
+
+            <?php if ($lazy): ?>
+                lazyLoad: true,
+            <?php endif; ?>
+
+            <?php if(!$isResponsive): ?>
+                responsive: false,
+                items: <?php echo $showItems; ?>,
+            <?php else: ?>
+                itemsCustom: [ <?php echo $breakpoints; ?> ],
+                responsiveRefreshRate: 50,
+            <?php endif; ?>
+
+            <?php if ($speed): ?>
+                slideSpeed: <?php echo $speed; ?>,
+            <?php endif; ?>
+
+            <?php if ($autoSpeed): ?>
+                paginationSpeed: <?php echo $autoSpeed; ?>,
+            <?php endif; ?>
+
+            <?php if ($move !== 1): ?>
+                scrollPerPage: true,
+            <?php endif; ?>
+
+            <?php if ($timeout): ?>
+                autoPlay: <?php echo $timeout; ?>,
+            <?php endif; ?>
+
+            <?php if ($pause): ?>
+                stopOnHover: true,
+            <?php endif; ?>
+
+            <?php if ($loop): ?>
+                rewindNav: true,
+                rewindSpeed: 600,
+            <?php else: ?>
+                rewindNav: false,
+            <?php endif; ?>
+
+            <?php if ($pagination): ?>
+                pagination: true,
+            <?php else: ?>
+                pagination: false,
+            <?php endif; ?>
+
+                navigation: true,
+                navigationText: false
+
+            }); //end: owl
+
+        });
+    //]]>
+    </script>
+    <script type="text/javascript">
+    //<![CDATA[
+        document.observe('dom:loaded', function() {
+            new SoldTogether.Checkboxes({
+                container        : ".block-soldtogether-customer-ultimo",
+                checkboxIdPattern: '#relatedcustomer-checkbox{{id}}',
+                selectAllText    : "<?php echo Mage::helper('soldtogether')->__('select all') ?>",
+                unselectAllText  : "<?php echo Mage::helper('soldtogether')->__('unselect all') ?>"
+            });
+        });
+    //]]>
+    </script>
+
+</div> <!-- end: block -->
+<?php endif; ?>
